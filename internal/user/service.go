@@ -20,8 +20,8 @@ type Service struct {
 	jwtManager *auth.JWTManager
 }
 
-func NewUserService(repo RepositoryInterface) *Service {
-	return &Service{repo: repo}
+func NewUserService(repo RepositoryInterface, jwtManager *auth.JWTManager) *Service {
+	return &Service{repo: repo, jwtManager: jwtManager}
 }
 
 // Register - регистрация пользователя
