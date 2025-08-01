@@ -13,7 +13,7 @@ type Repository struct {
 	pool *pgxpool.Pool
 }
 
-func NewURLepository(pool *pgxpool.Pool) *Repository {
+func NewURLRepository(pool *pgxpool.Pool) *Repository {
 	return &Repository{pool: pool}
 }
 
@@ -57,7 +57,7 @@ func (r *Repository) GetLink(ctx context.Context, code string) (*Link, error) {
 }
 
 // GetUserLinks возращает все созданные ссылки пользователя
-func (r *Repository) GetUserLinks(ctx context.Context, userID string) (*[]Link, error) {
+func (r *Repository) GetUserLinks(ctx context.Context, userID uuid.UUID) (*[]Link, error) {
 	query := `SELECT id, user_id, original_url, short_code, created_at, is_active
 	          FROM links
 	          WHERE user_id = $1`
@@ -80,7 +80,7 @@ func (r *Repository) GetUserLinks(ctx context.Context, userID string) (*[]Link, 
 }
 
 // LogClick логирует переход по ссылке
-func (r *Repository) LogClick(ctx context.Context, linkID int, ip, userAgent, referrer string) error {
+func (r *Repository) LogClick(ctx context.Context, linkID uuid.UUID, ip, userAgent, referrer string) error {
 	query := `INSERT INTO clicks (link_id, ip_address, user_agent, referrer)
 	          VALUES ($1, $2, $3, $4)`
 	_, err := r.pool.Exec(ctx, query, linkID, ip, userAgent, referrer)
@@ -88,7 +88,7 @@ func (r *Repository) LogClick(ctx context.Context, linkID int, ip, userAgent, re
 }
 
 // GetClicks возращает статистику по переходам
-func (r *Repository) GetClicks(ctx context.Context, linkID uuid.UUID) ([]Click, error) {
+func (r *Repository) GetClicks(ctx context.Context, linkID uuid.UUID) (*[]Click, error) {
 	query := `SELECT id, timestamp, ip_address, user_agent, referrer
 	          FROM clicks
 	          WHERE link_id = $1`
@@ -108,5 +108,5 @@ func (r *Repository) GetClicks(ctx context.Context, linkID uuid.UUID) ([]Click, 
 		c.LinkID = linkID
 		clicks = append(clicks, c)
 	}
-	return clicks, nil
+	return &clicks, nil
 }
