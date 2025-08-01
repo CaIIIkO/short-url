@@ -48,31 +48,3 @@ func AuthMiddleware(jwtManager *JWTManager, next http.Handler) http.Handler {
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
-
-func OptionalAuthMiddleware(jwtManager *JWTManager, next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		authHeader := r.Header.Get("Authorization")
-		// Токен отсутствует — просто продолжаем без userID
-		if authHeader == "" {
-			next.ServeHTTP(w, r)
-			return
-		}
-
-		parts := strings.SplitN(authHeader, " ", 2)
-		if len(parts) != 2 || strings.ToLower(parts[0]) != "bearer" {
-			next.ServeHTTP(w, r)
-			return
-		}
-
-		token := parts[1]
-		userID, err := jwtManager.Parse(token)
-		if err != nil {
-			next.ServeHTTP(w, r)
-			return
-		}
-
-		// Добавляем userID в context
-		ctx := WithUserID(r.Context(), userID)
-		next.ServeHTTP(w, r.WithContext(ctx))
-	})
-}
