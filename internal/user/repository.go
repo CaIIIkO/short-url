@@ -5,7 +5,7 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/jackc/pgx"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -24,7 +24,7 @@ func (r *Repository) Create(ctx context.Context, u *User) (*User, error) {
 		VALUES ($1, $2)
 		RETURNING id, created_at
 	`
-	err := r.pool.QueryRow(ctx, query, u.Email, u.PasswordHash).Scan(&u.ID, &u.CreatedAt)
+	err := r.pool.QueryRow(ctx, query, strings.ToLower(u.Email), u.PasswordHash).Scan(&u.ID, &u.CreatedAt)
 	if err != nil {
 		return nil, err
 	}
