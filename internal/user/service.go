@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/mail"
 	"regexp"
+	"short-url/internal/auth"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -15,7 +16,8 @@ type RepositoryInterface interface {
 }
 
 type Service struct {
-	repo RepositoryInterface
+	repo       RepositoryInterface
+	jwtManager *auth.JWTManager
 }
 
 func NewUserService(repo RepositoryInterface) *Service {
@@ -78,4 +80,37 @@ func (s *Service) validateRegisterInput(ctx context.Context, input *RegisterRequ
 	}
 
 	return nil
+}
+
+// Authenticate - аутентификация пользователя
+func (s *Service) Authenticate(ctx context.Context, input *LoginRequest) (string, error) {
+	user, err := s.validateAuthenticateInput(ctx, input)
+	if err != nil {
+		return "", err
+	}
+
+	token, err := s.jwtManager.Generate(user.ID)
+	if err != nil {
+		return "", errors.New("token error")
+	}
+
+	return token, nil
+}
+
+// validateLoginInput проверяет корректность входных данных при аутентификации
+func (s *Service) validateAuthenticateInput(ctx context.Context, input *LoginRequest) (*User, error) {
+	//Проверка существования пользователя
+	user, err := s.repo.GetByEmail(ctx, input.Email)
+	if err != nil {
+		return nil, err
+	}
+	if user == nil {
+		return nil, errors.New("user not found")
+	}
+
+	//Проверка пароля
+	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(input.Password)); err != nil {
+		return nil, errors.New("invalid password")
+	}
+	return user, err
 }
