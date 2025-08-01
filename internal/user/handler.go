@@ -1,4 +1,4 @@
-package url
+package user
 
 type ServiceInterface interface {
 }
