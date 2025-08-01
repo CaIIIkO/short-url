@@ -23,3 +23,36 @@ type Click struct {
 	UserAgent string    `json:"user_agent"`
 	Referrer  string    `json:"referrer"`
 }
+
+type CreateLinkRequest struct {
+	Original string `json:"original_url"`
+}
+
+type CreateLinkResponse struct {
+	ID        uuid.UUID `json:"id"`
+	UserID    uuid.UUID `json:"user_id"`
+	Original  string    `json:"original_url"`
+	ShortURL  string    `json:"short_url"`
+	ShortCode string    `json:"short_code"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
+type LinksListResponse struct {
+	ID        uuid.UUID `json:"id"`
+	UserID    uuid.UUID `json:"user_id"`
+	Original  string    `json:"original_url"`
+	ShortURL  string    `json:"short_url"`
+	ShortCode string    `json:"short_code"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
+type StatsResponse struct {
+	ID         uuid.UUID `json:"id"`
+	Original   string    `json:"original_url"`
+	ShortURL   string    `json:"short_url"`
+	ShortCode  string    `json:"short_code"`
+	CreatedAt  time.Time `json:"created_at"`
+	IsActive   bool      `json:"is_active"`
+	TotalClick int       `json:"total_clicks"`
+	Clicks     []Click   `json:"clicks"`
+}
