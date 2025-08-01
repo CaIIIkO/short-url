@@ -6,6 +6,6 @@ type Repository struct {
 	pool *pgxpool.Pool
 }
 
-func NewAdRepository(pool *pgxpool.Pool) *Repository {
+func NewURLepository(pool *pgxpool.Pool) *Repository {
 	return &Repository{pool: pool}
 }

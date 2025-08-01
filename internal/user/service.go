@@ -7,6 +7,6 @@ type Service struct {
 	repo RepositoryInterface
 }
 
-func NewAdService(repo RepositoryInterface) *Service {
+func NewUserService(repo RepositoryInterface) *Service {
 	return &Service{repo: repo}
 }

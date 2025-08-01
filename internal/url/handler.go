@@ -7,6 +7,6 @@ type Handler struct {
 	service ServiceInterface
 }
 
-func NewAdHandler(service ServiceInterface) *Handler {
+func NewURLHandler(service ServiceInterface) *Handler {
 	return &Handler{service: service}
 }
