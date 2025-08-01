@@ -6,6 +6,7 @@ import (
 	"os"
 	"short-url/internal/auth"
 	"short-url/internal/db"
+	"short-url/internal/url"
 	"short-url/internal/user"
 )
 
@@ -35,15 +36,20 @@ func main() {
 	userService := user.NewUserService(userRepo, jwtManager)
 	userHandler := user.NewUserHandler(userService)
 
+	urlRepo := url.NewURLRepository(pool)
+	urlService := url.NewURLService(urlRepo)
+	urlHandler := url.NewURLHandler(urlService, "http://localhost:8080/url/")
+
 	//http
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("/auth/register", userHandler.Register) //POST
-	mux.HandleFunc("/auth/login", userHandler.Login)       //POST
+	mux.HandleFunc("/auth/register", userHandler.Register) //POST - регистрация
+	mux.HandleFunc("/auth/login", userHandler.Login)       //POST - авторизация
 
-	// mux.HandleFunc("/url/{code}")       //GET
-	// mux.HandleFunc("/url/{code}/stats") //GET
-	// mux.HandleFunc("/url/create")       //POST
+	mux.Handle("/url/create", auth.AuthMiddleware(jwtManager, http.HandlerFunc(urlHandler.CreateLink))) //POST - создание ссылки
+	mux.Handle("/url/stats/", auth.AuthMiddleware(jwtManager, http.HandlerFunc(urlHandler.Stats)))      //GET - статистика переходов по ссылке
+	mux.HandleFunc("/url/", urlHandler.Redirect)                                                        //GET - редирект ссылка
+	mux.Handle("/url/links", auth.AuthMiddleware(jwtManager, http.HandlerFunc(urlHandler.LinksList)))   //GET - все ссылки авторизованного пользователя
 
 	// Health check
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
