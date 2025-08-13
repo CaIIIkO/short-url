@@ -12,6 +12,7 @@ import (
 )
 
 const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+const maxRetry = 5
 
 type RepositoryInterface interface {
 	CreateLink(ctx context.Context, userID uuid.UUID, originalURL, code string) (*Link, error)
@@ -52,17 +53,30 @@ func (s *Service) CreateLink(ctx context.Context, originalURL string) (*Link, er
 		return nil, errors.New("URL must have a host")
 	}
 
-	code := generateCode(6)
+	// Генерация кода
+	var code string
+	retryCounter := 0
+	for {
+		code = generateCode(6)
+		link, err := s.repo.GetLink(ctx, code)
+		if link == nil && err == nil {
+			break
+		}
+		if retryCounter >= maxRetry {
+			return nil, errors.New("error code generate")
+		}
+		retryCounter++
+	}
 
 	return s.repo.CreateLink(ctx, userID, originalURL, code)
 }
 
 // Пересмотреть реализацию алгоритма!
 func generateCode(n int) string {
-	rand.Seed(time.Now().UnixNano())
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	b := make([]byte, n)
 	for i := range b {
-		b[i] = letterBytes[rand.Intn(len(letterBytes))]
+		b[i] = letterBytes[r.Intn(len(letterBytes))]
 	}
 	return string(b)
 }
