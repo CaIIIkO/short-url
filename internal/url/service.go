@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"math/rand"
+	"net/url"
 	"short-url/internal/auth"
 	"time"
 
@@ -30,7 +31,27 @@ func NewURLService(repo RepositoryInterface) *Service {
 
 func (s *Service) CreateLink(ctx context.Context, originalURL string) (*Link, error) {
 	userID, _ := auth.UserIDFromContext(ctx)
-	//Добавить валидацию оригинальной ссылки
+	// Проверка на пустую строку
+	if originalURL == "" {
+		return nil, errors.New("original URL is required")
+	}
+
+	// Разбор URL
+	parsed, err := url.ParseRequestURI(originalURL)
+	if err != nil {
+		return nil, errors.New("invalid URL format")
+	}
+
+	// http/https
+	if parsed.Scheme != "http" && parsed.Scheme != "https" {
+		return nil, errors.New("URL must start with http or https")
+	}
+
+	// Проверка, что есть хост
+	if parsed.Host == "" {
+		return nil, errors.New("URL must have a host")
+	}
+
 	code := generateCode(6)
 
 	return s.repo.CreateLink(ctx, userID, originalURL, code)
@@ -53,6 +74,7 @@ func (s *Service) RedirectAndLog(ctx context.Context, code string, ip string, us
 	}
 
 	//Логирование перехода по ссылке
+	// Добавит обработку ошибок
 	_ = s.repo.LogClick(ctx, link.ID, ip, userAgent, referrer)
 
 	return link, nil
@@ -61,6 +83,7 @@ func (s *Service) RedirectAndLog(ctx context.Context, code string, ip string, us
 func (s *Service) Stats(ctx context.Context, code string) (*[]Click, *Link, error) {
 	userID, _ := auth.UserIDFromContext(ctx)
 
+	//Проверка на существование ссылки и проверка на авторизацию
 	link, err := s.repo.GetLink(ctx, code)
 	if err != nil || link == nil || link.UserID != userID {
 		return nil, nil, errors.New("access denied or not found")
